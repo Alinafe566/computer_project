@@ -1,44 +1,56 @@
 import 'package:flutter/material.dart';
 
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final notifications = [
-      NotificationItem(
-        icon: Icons.warning,
-        title: 'Product Alert',
-        message: 'Multiple counterfeit reports for Premium Headphones (PRD001)',
-        time: '2 hours ago',
-        isRead: false,
-        severity: NotificationSeverity.high,
-      ),
-      NotificationItem(
-        icon: Icons.info,
-        title: 'System Update',
-        message: 'MBS Verify app has been updated with new security features',
-        time: '1 day ago',
-        isRead: true,
-        severity: NotificationSeverity.info,
-      ),
-      NotificationItem(
-        icon: Icons.security,
-        title: 'Security Notice',
-        message: 'New counterfeit products detected in Electronics category',
-        time: '3 days ago',
-        isRead: true,
-        severity: NotificationSeverity.medium,
-      ),
-    ];
+  State<NotificationsPage> createState() => _NotificationsPageState();
+}
 
+class _NotificationsPageState extends State<NotificationsPage> {
+  List<NotificationItem> notifications = [
+    NotificationItem(
+      icon: Icons.warning,
+      title: 'Product Alert',
+      message: 'Multiple counterfeit reports for Premium Headphones (PRD001)',
+      time: '2 hours ago',
+      isRead: false,
+      severity: NotificationSeverity.high,
+    ),
+    NotificationItem(
+      icon: Icons.info,
+      title: 'System Update',
+      message: 'MBS Verify app has been updated with new security features',
+      time: '1 day ago',
+      isRead: true,
+      severity: NotificationSeverity.info,
+    ),
+    NotificationItem(
+      icon: Icons.security,
+      title: 'Security Notice',
+      message: 'New counterfeit products detected in Electronics category',
+      time: '3 days ago',
+      isRead: true,
+      severity: NotificationSeverity.medium,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
           TextButton(
             onPressed: () {
-              // Mark all as read
+              setState(() {
+                for (var notification in notifications) {
+                  notification.isRead = true;
+                }
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All notifications marked as read')),
+              );
             },
             child: const Text(
               'Mark all read',
@@ -79,7 +91,7 @@ class NotificationsPage extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: _getSeverityColor(notification.severity).withOpacity(0.1),
+                        color: _getSeverityColor(notification.severity).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(
@@ -119,7 +131,22 @@ class NotificationsPage extends StatelessWidget {
                             ),
                           ),
                     onTap: () {
-                      // Mark as read and show details
+                      setState(() {
+                        notification.isRead = true;
+                      });
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text(notification.title),
+                          content: Text(notification.message),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                   ),
                 );
@@ -145,7 +172,7 @@ class NotificationItem {
   final String title;
   final String message;
   final String time;
-  final bool isRead;
+  bool isRead;
   final NotificationSeverity severity;
 
   NotificationItem({

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-//import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import 'product_result_page.dart';
 
@@ -24,7 +24,28 @@ class _QRScannerPageState extends State<QRScannerPage> {
       lastScannedCode = qrCode;
     });
     
-    final result = await ApiService.verifyProduct(qrCode);
+    // Parse QR code for token and signature
+    String token = '';
+    String? signature;
+    
+    if (qrCode.contains('token=')) {
+      final uri = Uri.parse(qrCode);
+      token = uri.queryParameters['token'] ?? '';
+      signature = uri.queryParameters['sig'];
+    } else {
+      // Fallback: treat entire QR as token
+      token = qrCode;
+    }
+    
+    // Get user ID
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
+    
+    final result = await ApiService.verifyProductBatch(
+      token: token,
+      signature: signature,
+      userId: userId,
+    );
 
     if (!mounted) return;
 
@@ -33,7 +54,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
       MaterialPageRoute(
         builder: (context) => ProductResultPage(
           scanResult: result,
-          isAuthentic: result['success'] == true,
+          isAuthentic: result['success'] == true && result['status'] == 'valid',
         ),
       ),
     );

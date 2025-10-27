@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 
 class ReportCounterfeitPage extends StatefulWidget {
-  const ReportCounterfeitPage({super.key});
+  final String? productId;
+  const ReportCounterfeitPage({super.key, this.productId});
 
   @override
   State<ReportCounterfeitPage> createState() => _ReportCounterfeitPageState();
@@ -9,9 +12,14 @@ class ReportCounterfeitPage extends StatefulWidget {
 
 class _ReportCounterfeitPageState extends State<ReportCounterfeitPage> {
   final _formKey = GlobalKey<FormState>();
-  final _productIdController = TextEditingController();
+  final _storeNameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,16 +58,32 @@ class _ReportCounterfeitPageState extends State<ReportCounterfeitPage> {
                 ),
               ),
               const SizedBox(height: 24),
+              if (widget.productId != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.qr_code),
+                      const SizedBox(width: 8),
+                      Text('Product ID: ${widget.productId}'),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
               TextFormField(
-                controller: _productIdController,
+                controller: _storeNameController,
                 decoration: const InputDecoration(
-                  labelText: 'Product ID or QR Code',
+                  labelText: 'Store Name',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.qr_code),
+                  prefixIcon: Icon(Icons.store),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter product ID';
+                    return 'Please enter store name';
                   }
                   return null;
                 },
@@ -139,20 +163,52 @@ class _ReportCounterfeitPageState extends State<ReportCounterfeitPage> {
 
     setState(() => _isLoading = true);
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('user_id');
+      
+      if (userId == null) {
+        throw Exception('User not logged in');
+      }
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Report submitted successfully. Thank you for helping protect others!'),
-          backgroundColor: Colors.green,
-        ),
+      final result = await ApiService.submitCounterfeitReport(
+        userId: userId,
+        productId: widget.productId,
+        storeName: _storeNameController.text,
+        description: _descriptionController.text,
       );
-      
-      Navigator.pop(context);
+
+      if (mounted) {
+        if (result['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message']),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message']),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }

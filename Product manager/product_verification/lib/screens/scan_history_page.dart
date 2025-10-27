@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class ScanHistoryPage extends StatefulWidget {
   const ScanHistoryPage({super.key});
@@ -9,36 +12,31 @@ class ScanHistoryPage extends StatefulWidget {
 
 class _ScanHistoryPageState extends State<ScanHistoryPage> {
   String _filter = 'all';
+  List<Map<String, dynamic>> _scanHistory = [];
+  bool _isLoading = true;
 
-  final List<ScanRecord> _scanHistory = [
-    ScanRecord(
-      productName: 'Premium Headphones',
-      manufacturer: 'TechCorp Ltd',
-      scanDate: DateTime.now().subtract(const Duration(hours: 2)),
-      result: 'authentic',
-      productId: 'PRD001',
-    ),
-    ScanRecord(
-      productName: 'Organic Green Tea',
-      manufacturer: 'Nature Foods',
-      scanDate: DateTime.now().subtract(const Duration(days: 1)),
-      result: 'authentic',
-      productId: 'PRD002',
-    ),
-    ScanRecord(
-      productName: 'Unknown Product',
-      manufacturer: 'Unknown',
-      scanDate: DateTime.now().subtract(const Duration(days: 2)),
-      result: 'not_found',
-      productId: 'PRD999',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadScanHistory();
+  }
+
+  Future<void> _loadScanHistory() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.user != null) {
+      final history = await ApiService.getScanHistory(authProvider.user!.id);
+      setState(() {
+        _scanHistory = history;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final filteredHistory = _scanHistory.where((record) {
       if (_filter == 'all') return true;
-      return record.result == _filter;
+      return record['scan_result'] == _filter;
     }).toList();
 
     return Scaffold(
@@ -60,34 +58,36 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
             ),
           ),
           Expanded(
-            child: filteredHistory.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.history,
-                          size: 64,
-                          color: Colors.grey,
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredHistory.isEmpty
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.history,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'No scan history found',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 16),
-                        Text(
-                          'No scan history found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredHistory.length,
-                    itemBuilder: (context, index) {
-                      final record = filteredHistory[index];
-                      return _buildHistoryCard(record);
-                    },
-                  ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredHistory.length,
+                        itemBuilder: (context, index) {
+                          final record = filteredHistory[index];
+                          return _buildHistoryCard(record);
+                        },
+                      ),
           ),
         ],
       ),
@@ -106,27 +106,34 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
     );
   }
 
-  Widget _buildHistoryCard(ScanRecord record) {
+  Widget _buildHistoryCard(Map<String, dynamic> record) {
     Color statusColor;
     IconData statusIcon;
     String statusText;
 
-    switch (record.result) {
-      case 'authentic':
+    switch (record['scan_result']) {
+      case 'valid':
         statusColor = Colors.green;
         statusIcon = Icons.verified;
-        statusText = 'Authentic';
+        statusText = 'Valid';
         break;
       case 'fake':
         statusColor = Colors.red;
         statusIcon = Icons.warning;
-        statusText = 'Counterfeit';
+        statusText = 'Fake';
+        break;
+      case 'expired':
+        statusColor = Colors.orange;
+        statusIcon = Icons.schedule;
+        statusText = 'Expired';
         break;
       default:
-        statusColor = Colors.orange;
+        statusColor = Colors.grey;
         statusIcon = Icons.help;
         statusText = 'Not Found';
     }
+
+    final createdAt = DateTime.parse(record['created_at']);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -135,13 +142,13 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
           backgroundColor: statusColor.withValues(alpha: 0.1),
           child: Icon(statusIcon, color: statusColor),
         ),
-        title: Text(record.productName),
+        title: Text(record['batch_id'] ?? 'Unknown Product'),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(record.manufacturer),
+            Text(record['scan_location'] ?? 'Unknown Location'),
             Text(
-              '${record.scanDate.day}/${record.scanDate.month}/${record.scanDate.year} ${record.scanDate.hour}:${record.scanDate.minute.toString().padLeft(2, '0')}',
+              '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey.shade600,

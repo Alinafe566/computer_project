@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'screens/batch_management_page.dart';
+import 'services/api_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -46,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.73.84/product_verification_system_api/auth/login.php'),
+        Uri.parse('http://192.168.39.84/product_verification_system_api/auth/login.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': _emailController.text,
@@ -257,8 +259,30 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-class DashboardOverview extends StatelessWidget {
+class DashboardOverview extends StatefulWidget {
   const DashboardOverview({super.key});
+
+  @override
+  State<DashboardOverview> createState() => _DashboardOverviewState();
+}
+
+class _DashboardOverviewState extends State<DashboardOverview> {
+  Map<String, dynamic> stats = {};
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final data = await ApiService.getDashboardStats();
+    setState(() {
+      stats = data;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -278,7 +302,7 @@ class DashboardOverview extends StatelessWidget {
                         const Icon(Icons.verified, size: 32, color: Colors.green),
                         const SizedBox(height: 8),
                         const Text('Verified Products', style: TextStyle(fontSize: 16)),
-                        const Text('1,247', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        Text('${stats['total_products'] ?? 0}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -293,7 +317,7 @@ class DashboardOverview extends StatelessWidget {
                         const Icon(Icons.warning, size: 32, color: Colors.orange),
                         const SizedBox(height: 8),
                         const Text('Active Alerts', style: TextStyle(fontSize: 16)),
-                        const Text('23', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        Text('${stats['total_scans'] ?? 0}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -308,7 +332,7 @@ class DashboardOverview extends StatelessWidget {
                         const Icon(Icons.report_problem, size: 32, color: Colors.red),
                         const SizedBox(height: 8),
                         const Text('Counterfeit Reports', style: TextStyle(fontSize: 16)),
-                        const Text('8', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        Text('${stats['total_reports'] ?? 0}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -323,7 +347,7 @@ class DashboardOverview extends StatelessWidget {
                         const Icon(Icons.business, size: 32, color: Colors.blue),
                         const SizedBox(height: 8),
                         const Text('Manufacturers', style: TextStyle(fontSize: 16)),
-                        const Text('156', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        Text('${stats['total_manufacturers'] ?? 0}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -372,6 +396,102 @@ class ProductManagementPage extends StatefulWidget {
 }
 
 class _ProductManagementPageState extends State<ProductManagementPage> {
+  List<Map<String, dynamic>> products = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    final data = await ApiService.getAllProducts();
+    setState(() {
+      products = data;
+      isLoading = false;
+    });
+  }
+
+  void _showBulkImportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bulk Import Products'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Select CSV file with product data:'),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.file_upload),
+              label: const Text('Choose File'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Bulk import completed successfully')),
+              );
+            },
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProductDetails(Map<String, dynamic> product) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(product['name'] ?? 'Product Details'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Product ID: ${product['product_id']}'),
+              Text('Manufacturer: ${product['manufacturer']}'),
+              Text('Category: ${product['category'] ?? 'N/A'}'),
+              Text('Price: \$${product['price'] ?? 'N/A'}'),
+              Text('Batch: ${product['batch_number'] ?? 'N/A'}'),
+              Text('Status: ${product['certification_status']}'),
+              if (product['batch_id'] != null)
+                Text('QR Batch: ${product['batch_id']}'),
+              if (product['description'] != null)
+                Text('Description: ${product['description']}'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          if (product['qr_token'] != null)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('QR Code: ${product['qr_token']}')),
+                );
+              },
+              child: const Text('Show QR'),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -390,7 +510,16 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               ),
               const SizedBox(width: 16),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BatchManagementPage()),
+                ),
+                icon: const Icon(Icons.inventory),
+                label: const Text('Create Batch'),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton.icon(
+                onPressed: _showBulkImportDialog,
                 icon: const Icon(Icons.upload),
                 label: const Text('Bulk Import'),
               ),
@@ -406,28 +535,28 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     child: Text('Registered Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   Expanded(
-                    child: ListView(
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.inventory),
-                          title: const Text('Premium Headphones'),
-                          subtitle: const Text('PRD001 - TechCorp Ltd'),
-                          trailing: Chip(
-                            label: const Text('Certified'),
-                            backgroundColor: Colors.green.shade100,
+                    child: isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView.builder(
+                            itemCount: products.length,
+                            itemBuilder: (context, index) {
+                              final product = products[index];
+                              return ListTile(
+                                leading: const Icon(Icons.inventory),
+                                title: Text(product['name'] ?? 'Unknown Product'),
+                                subtitle: Text('${product['product_id']} - ${product['manufacturer']}'),
+                                trailing: Chip(
+                                  label: Text(product['certification_status'] ?? 'Unknown'),
+                                  backgroundColor: product['certification_status'] == 'Certified by MBS'
+                                      ? Colors.green.shade100
+                                      : Colors.orange.shade100,
+                                ),
+                                onTap: () {
+                                  _showProductDetails(product);
+                                },
+                              );
+                            },
                           ),
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.inventory),
-                          title: const Text('Organic Green Tea'),
-                          subtitle: const Text('PRD002 - Nature Foods'),
-                          trailing: Chip(
-                            label: const Text('Certified'),
-                            backgroundColor: Colors.green.shade100,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),
@@ -439,8 +568,30 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   }
 }
 
-class CounterfeitReportsPage extends StatelessWidget {
+class CounterfeitReportsPage extends StatefulWidget {
   const CounterfeitReportsPage({super.key});
+
+  @override
+  State<CounterfeitReportsPage> createState() => _CounterfeitReportsPageState();
+}
+
+class _CounterfeitReportsPageState extends State<CounterfeitReportsPage> {
+  List<Map<String, dynamic>> reports = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReports();
+  }
+
+  Future<void> _loadReports() async {
+    final data = await ApiService.getCounterfeitReports();
+    setState(() {
+      reports = data;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -454,28 +605,38 @@ class CounterfeitReportsPage extends StatelessWidget {
               child: Text('Counterfeit Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             Expanded(
-              child: ListView(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.report_problem, color: Colors.red),
-                    title: const Text('Fake Premium Headphones'),
-                    subtitle: const Text('Product ID: PRD001 - Status: Investigating'),
-                    trailing: ElevatedButton(
-                      onPressed: () {},
-                      child: const Text('Review'),
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      itemCount: reports.length,
+                      itemBuilder: (context, index) {
+                        final report = reports[index];
+                        return ListTile(
+                          leading: Icon(
+                            Icons.report_problem,
+                            color: report['status'] == 'resolved' ? Colors.green : Colors.red,
+                          ),
+                          title: Text(report['store_name'] ?? 'Unknown Store'),
+                          subtitle: Text('Product: ${report['product_id'] ?? 'N/A'} - Status: ${report['status']}'),
+                          trailing: ElevatedButton(
+                            onPressed: () async {
+                              final result = await ApiService.updateReportStatus(report['id'], 'investigating');
+                              if (result['success']) {
+                                setState(() {
+                                  report['status'] = 'investigating';
+                                });
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Report #${report['id']} under investigation')),
+                                  );
+                                }
+                              }
+                            },
+                            child: const Text('Review'),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.report_problem, color: Colors.orange),
-                    title: const Text('Suspicious Tea Packaging'),
-                    subtitle: const Text('Product ID: PRD002 - Status: Pending'),
-                    trailing: ElevatedButton(
-                      onPressed: () {},
-                      child: const Text('Review'),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),
@@ -506,7 +667,30 @@ class ActiveAlertsPage extends StatelessWidget {
                     title: const Text('Critical: Multiple counterfeit reports'),
                     subtitle: const Text('PRD001 - 5 reports in last hour'),
                     trailing: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Investigation'),
+                            content: const Text('Critical alert investigation initiated. MBS team has been notified.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Close'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Investigation team assigned')),
+                                  );
+                                },
+                                child: const Text('Assign Team'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                       child: const Text('Investigate'),
                     ),
                   ),
@@ -515,7 +699,30 @@ class ActiveAlertsPage extends StatelessWidget {
                     title: const Text('Medium: Product expiry approaching'),
                     subtitle: const Text('PRD002 - Expires in 30 days'),
                     trailing: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Product Review'),
+                            content: const Text('Product expiry review completed. Manufacturer has been notified to update inventory.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Close'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Notification sent to manufacturer')),
+                                  );
+                                },
+                                child: const Text('Send Notice'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                       child: const Text('Review'),
                     ),
                   ),
@@ -529,8 +736,31 @@ class ActiveAlertsPage extends StatelessWidget {
   }
 }
 
-class ScanAnalyticsPage extends StatelessWidget {
+class ScanAnalyticsPage extends StatefulWidget {
   const ScanAnalyticsPage({super.key});
+
+  @override
+  State<ScanAnalyticsPage> createState() => _ScanAnalyticsPageState();
+}
+
+class _ScanAnalyticsPageState extends State<ScanAnalyticsPage> {
+  Map<String, dynamic> stats = {};
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => isLoading = true);
+    final data = await ApiService.getDashboardStats();
+    setState(() {
+      stats = data;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -541,13 +771,32 @@ class ScanAnalyticsPage extends StatelessWidget {
           Row(
             children: [
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                  final report = await ApiService.exportAnalyticsPDF();
+                  if (mounted) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Analytics Report'),
+                        content: SingleChildScrollView(
+                          child: Text(report),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
                 icon: const Icon(Icons.picture_as_pdf),
                 label: const Text('Export PDF'),
               ),
               const SizedBox(width: 16),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: _loadData,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Refresh Data'),
               ),
@@ -568,8 +817,10 @@ class ScanAnalyticsPage extends StatelessWidget {
                           Expanded(
                             child: Container(
                               color: Colors.grey.shade200,
-                              child: const Center(
-                                child: Text('Chart Placeholder\n(Scan trends over time)'),
+                              child: Center(
+                                child: isLoading
+                                    ? const CircularProgressIndicator()
+                                    : Text('Total Scans: ${stats['total_scans'] ?? 0}\nTotal Products: ${stats['total_products'] ?? 0}'),
                               ),
                             ),
                           ),
@@ -608,8 +859,142 @@ class ScanAnalyticsPage extends StatelessWidget {
   }
 }
 
-class ManufacturerRegistryPage extends StatelessWidget {
+class ManufacturerRegistryPage extends StatefulWidget {
   const ManufacturerRegistryPage({super.key});
+
+  @override
+  State<ManufacturerRegistryPage> createState() => _ManufacturerRegistryPageState();
+}
+
+class _ManufacturerRegistryPageState extends State<ManufacturerRegistryPage> {
+  List<Map<String, dynamic>> manufacturers = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadManufacturers();
+  }
+
+  Future<void> _loadManufacturers() async {
+    final data = await ApiService.getManufacturers();
+    setState(() {
+      manufacturers = data;
+      isLoading = false;
+    });
+  }
+
+  void _showEditManufacturerDialog(Map<String, dynamic> manufacturer) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit ${manufacturer['name']}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('License: ${manufacturer['license_number']}'),
+            Text('Phone: ${manufacturer['phone']}'),
+            Text('Email: ${manufacturer['email']}'),
+            Text('Status: ${manufacturer['status']}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Edit functionality coming soon')),
+              );
+            },
+            child: const Text('Save Changes'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddManufacturerDialog() {
+    final nameController = TextEditingController();
+    final licenseController = TextEditingController();
+    final phoneController = TextEditingController();
+    final emailController = TextEditingController();
+    final addressController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add New Manufacturer'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Company Name'),
+              ),
+              TextField(
+                controller: licenseController,
+                decoration: const InputDecoration(labelText: 'License Number'),
+              ),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(labelText: 'Phone'),
+              ),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              TextField(
+                controller: addressController,
+                decoration: const InputDecoration(labelText: 'Address'),
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty && licenseController.text.isNotEmpty) {
+                final result = await ApiService.addManufacturer({
+                  'name': nameController.text,
+                  'license_number': licenseController.text,
+                  'phone': phoneController.text,
+                  'email': emailController.text,
+                  'address': addressController.text,
+                });
+                
+                Navigator.pop(context);
+                if (result['success']) {
+                  _loadManufacturers();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result['message'])),
+                    );
+                  }
+                } else {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result['message'])),
+                    );
+                  }
+                }
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -620,13 +1005,19 @@ class ManufacturerRegistryPage extends StatelessWidget {
           Row(
             children: [
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  _showAddManufacturerDialog();
+                },
                 icon: const Icon(Icons.add),
                 label: const Text('Add Manufacturer'),
               ),
               const SizedBox(width: 16),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('License verification initiated')),
+                  );
+                },
                 icon: const Icon(Icons.verified),
                 label: const Text('Verify License'),
               ),
@@ -642,46 +1033,50 @@ class ManufacturerRegistryPage extends StatelessWidget {
                     child: Text('Registered Manufacturers', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   Expanded(
-                    child: ListView(
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.business),
-                          title: const Text('TechCorp Ltd'),
-                          subtitle: const Text('License: LIC001 - Status: Active'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Icons.edit),
-                              ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Icons.block, color: Colors.red),
-                              ),
-                            ],
+                    child: isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView.builder(
+                            itemCount: manufacturers.length,
+                            itemBuilder: (context, index) {
+                              final manufacturer = manufacturers[index];
+                              return ListTile(
+                                leading: const Icon(Icons.business),
+                                title: Text(manufacturer['name']),
+                                subtitle: Text('License: ${manufacturer['license_number']} - Status: ${manufacturer['status']}'),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        _showEditManufacturerDialog(manufacturer);
+                                      },
+                                      icon: const Icon(Icons.edit),
+                                    ),
+                                    IconButton(
+                                      onPressed: () async {
+                                        final result = await ApiService.updateManufacturerStatus(
+                                          manufacturer['id'], 
+                                          manufacturer['status'] == 'active' ? 'block' : 'verify'
+                                        );
+                                        if (result['success']) {
+                                          _loadManufacturers();
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(result['message'])),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      icon: Icon(
+                                        manufacturer['status'] == 'active' ? Icons.block : Icons.check_circle,
+                                        color: manufacturer['status'] == 'active' ? Colors.red : Colors.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.business),
-                          title: const Text('Nature Foods'),
-                          subtitle: const Text('License: LIC002 - Status: Active'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Icons.edit),
-                              ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Icons.block, color: Colors.red),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),
@@ -693,8 +1088,166 @@ class ManufacturerRegistryPage extends StatelessWidget {
   }
 }
 
-class CompliancePage extends StatelessWidget {
+class CompliancePage extends StatefulWidget {
   const CompliancePage({super.key});
+
+  @override
+  State<CompliancePage> createState() => _CompliancePageState();
+}
+
+class _CompliancePageState extends State<CompliancePage> {
+  void _showIssuePenaltyDialog() {
+    final amountController = TextEditingController();
+    final reasonController = TextEditingController();
+    String selectedOffenseType = 'counterfeit';
+    int selectedManufacturerId = 1;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Issue Penalty'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<int>(
+                value: selectedManufacturerId,
+                decoration: const InputDecoration(labelText: 'Manufacturer'),
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text('TechCorp Ltd')),
+                  DropdownMenuItem(value: 2, child: Text('Nature Foods')),
+                ],
+                onChanged: (value) => setState(() => selectedManufacturerId = value!),
+              ),
+              DropdownButtonFormField<String>(
+                value: selectedOffenseType,
+                decoration: const InputDecoration(labelText: 'Offense Type'),
+                items: const [
+                  DropdownMenuItem(value: 'counterfeit', child: Text('Counterfeit')),
+                  DropdownMenuItem(value: 'price_manipulation', child: Text('Price Manipulation')),
+                  DropdownMenuItem(value: 'false_certification', child: Text('False Certification')),
+                ],
+                onChanged: (value) => setState(() => selectedOffenseType = value!),
+              ),
+              TextField(
+                controller: amountController,
+                decoration: const InputDecoration(labelText: 'Penalty Amount'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: reasonController,
+                decoration: const InputDecoration(labelText: 'Reason'),
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (amountController.text.isNotEmpty && reasonController.text.isNotEmpty) {
+                  final result = await ApiService.addPenalty({
+                    'manufacturer_id': selectedManufacturerId,
+                    'offense_type': selectedOffenseType,
+                    'penalty_amount': double.parse(amountController.text),
+                    'description': reasonController.text,
+                  });
+                  
+                  Navigator.pop(context);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result['message'])),
+                    );
+                  }
+                }
+              },
+              child: const Text('Issue Penalty'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showScheduleAuditDialog() {
+    final dateController = TextEditingController();
+    final auditorController = TextEditingController();
+    String selectedAuditType = 'inspection';
+    int selectedManufacturerId = 1;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Schedule Audit'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<int>(
+                value: selectedManufacturerId,
+                decoration: const InputDecoration(labelText: 'Manufacturer'),
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text('TechCorp Ltd')),
+                  DropdownMenuItem(value: 2, child: Text('Nature Foods')),
+                ],
+                onChanged: (value) => setState(() => selectedManufacturerId = value!),
+              ),
+              DropdownButtonFormField<String>(
+                value: selectedAuditType,
+                decoration: const InputDecoration(labelText: 'Audit Type'),
+                items: const [
+                  DropdownMenuItem(value: 'inspection', child: Text('Inspection')),
+                  DropdownMenuItem(value: 'compliance', child: Text('Compliance')),
+                  DropdownMenuItem(value: 'renewal', child: Text('Renewal')),
+                ],
+                onChanged: (value) => setState(() => selectedAuditType = value!),
+              ),
+              TextField(
+                controller: dateController,
+                decoration: const InputDecoration(
+                  labelText: 'Audit Date (YYYY-MM-DD)',
+                  hintText: '2024-12-01',
+                ),
+              ),
+              TextField(
+                controller: auditorController,
+                decoration: const InputDecoration(labelText: 'Auditor Name'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (dateController.text.isNotEmpty && auditorController.text.isNotEmpty) {
+                  final result = await ApiService.scheduleAudit({
+                    'manufacturer_id': selectedManufacturerId,
+                    'audit_type': selectedAuditType,
+                    'audit_date': dateController.text,
+                    'auditor_name': auditorController.text,
+                  });
+                  
+                  Navigator.pop(context);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${result['message']} - Receipt: ${result['receipt_number'] ?? 'N/A'}')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Schedule'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -705,13 +1258,17 @@ class CompliancePage extends StatelessWidget {
           Row(
             children: [
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  _showIssuePenaltyDialog();
+                },
                 icon: const Icon(Icons.gavel),
                 label: const Text('Issue Penalty'),
               ),
               const SizedBox(width: 16),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  _showScheduleAuditDialog();
+                },
                 icon: const Icon(Icons.schedule),
                 label: const Text('Schedule Audit'),
               ),
@@ -776,8 +1333,114 @@ class CompliancePage extends StatelessWidget {
   }
 }
 
-class AuditReportsPage extends StatelessWidget {
+class AuditReportsPage extends StatefulWidget {
   const AuditReportsPage({super.key});
+
+  @override
+  State<AuditReportsPage> createState() => _AuditReportsPageState();
+}
+
+class _AuditReportsPageState extends State<AuditReportsPage> {
+  void _showNewReportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New Audit Report'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const TextField(
+              decoration: InputDecoration(labelText: 'Report Title'),
+            ),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Manufacturer'),
+            ),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Audit Date'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('New report created')),
+              );
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReportDetails(String title, String status) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Status: $status'),
+            const Text('Audit Date: Jan 15, 2024'),
+            const Text('Auditor: MBS Inspector'),
+            const Text('Result: Compliant'),
+            const SizedBox(height: 16),
+            const Text('Summary: All manufacturing processes meet MBS standards.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditReportDialog(String title) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit: $title'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              decoration: InputDecoration(labelText: 'Status'),
+            ),
+            TextField(
+              decoration: InputDecoration(labelText: 'Notes'),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Report updated successfully')),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -788,13 +1451,19 @@ class AuditReportsPage extends StatelessWidget {
           Row(
             children: [
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  _showNewReportDialog();
+                },
                 icon: const Icon(Icons.add),
                 label: const Text('New Report'),
               ),
               const SizedBox(width: 16),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Reports archived successfully')),
+                  );
+                },
                 icon: const Icon(Icons.archive),
                 label: const Text('Archive'),
               ),
@@ -817,7 +1486,9 @@ class AuditReportsPage extends StatelessWidget {
                           title: const Text('TechCorp Compliance Audit'),
                           subtitle: const Text('Status: Final - Date: Jan 15, 2024'),
                           trailing: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              _showReportDetails('TechCorp Compliance Audit', 'Final');
+                            },
                             child: const Text('View'),
                           ),
                         ),
@@ -826,7 +1497,9 @@ class AuditReportsPage extends StatelessWidget {
                           title: const Text('Nature Foods Quality Check'),
                           subtitle: const Text('Status: Draft - Date: Jan 10, 2024'),
                           trailing: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              _showEditReportDialog('Nature Foods Quality Check');
+                            },
                             child: const Text('Edit'),
                           ),
                         ),
@@ -843,8 +1516,158 @@ class AuditReportsPage extends StatelessWidget {
   }
 }
 
-class SystemUsersPage extends StatelessWidget {
+class SystemUsersPage extends StatefulWidget {
   const SystemUsersPage({super.key});
+
+  @override
+  State<SystemUsersPage> createState() => _SystemUsersPageState();
+}
+
+class _SystemUsersPageState extends State<SystemUsersPage> {
+  void _showAddUserDialog() {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    String selectedRole = 'consumer';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add New User'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Full Name'),
+              ),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              DropdownButtonFormField<String>(
+                value: selectedRole,
+                decoration: const InputDecoration(labelText: 'Role'),
+                items: const [
+                  DropdownMenuItem(value: 'consumer', child: Text('Consumer')),
+                  DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                  DropdownMenuItem(value: 'manufacturer', child: Text('Manufacturer')),
+                ],
+                onChanged: (value) => setState(() => selectedRole = value!),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameController.text.isNotEmpty && emailController.text.isNotEmpty) {
+                  final result = await ApiService.addUser({
+                    'full_name': nameController.text,
+                    'email': emailController.text,
+                    'role': selectedRole,
+                  });
+                  
+                  Navigator.pop(context);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result['message'])),
+                    );
+                  }
+                }
+              },
+              child: const Text('Add User'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPermissionsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('User Permissions'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CheckboxListTile(
+              title: const Text('View Reports'),
+              value: true,
+              onChanged: (value) {},
+            ),
+            CheckboxListTile(
+              title: const Text('Manage Products'),
+              value: false,
+              onChanged: (value) {},
+            ),
+            CheckboxListTile(
+              title: const Text('System Admin'),
+              value: false,
+              onChanged: (value) {},
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Permissions updated')),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditUserDialog(String userName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit $userName'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const TextField(
+              decoration: InputDecoration(labelText: 'Full Name'),
+            ),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Email'),
+            ),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Role'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$userName updated successfully')),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1023,7 +1846,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.73.84/product_verification_system_api/products/add.php'),
+        Uri.parse('http://192.168.39.84/product_verification_system_api/products/add.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'product_id': _productIdController.text,

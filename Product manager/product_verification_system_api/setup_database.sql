@@ -53,11 +53,66 @@ CREATE TABLE IF NOT EXISTS counterfeit_reports (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     product_id VARCHAR(50),
+    store_name VARCHAR(200),
     report_description TEXT,
     photo_url VARCHAR(255),
     status ENUM('pending', 'investigating', 'resolved') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create product_batches table for QR management
+CREATE TABLE IF NOT EXISTS product_batches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    batch_id VARCHAR(50) UNIQUE NOT NULL,
+    product_name VARCHAR(200) NOT NULL,
+    manufacturer_id INT,
+    manufacture_date DATE NOT NULL,
+    expiry_date DATE NOT NULL,
+    certification_status ENUM('certified', 'expired', 'revoked') DEFAULT 'certified',
+    qr_token VARCHAR(255) UNIQUE NOT NULL,
+    qr_signature VARCHAR(255) NOT NULL,
+    qr_image_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
+);
+
+-- Create scan_logs table
+CREATE TABLE IF NOT EXISTS scan_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    batch_id VARCHAR(50),
+    scan_result ENUM('valid', 'expired', 'fake', 'not_found') NOT NULL,
+    scan_location VARCHAR(200),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create audit_receipts table
+CREATE TABLE IF NOT EXISTS audit_receipts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    manufacturer_id INT,
+    audit_type ENUM('inspection', 'compliance', 'renewal') NOT NULL,
+    audit_result ENUM('passed', 'failed', 'pending') NOT NULL,
+    audit_date DATE NOT NULL,
+    auditor_name VARCHAR(100),
+    notes TEXT,
+    receipt_number VARCHAR(50) UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
+);
+
+-- Create price_offenses table
+CREATE TABLE IF NOT EXISTS price_offenses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    manufacturer_id INT,
+    offense_type ENUM('counterfeit', 'price_manipulation', 'false_certification') NOT NULL,
+    offense_date DATE NOT NULL,
+    penalty_amount DECIMAL(10,2),
+    description TEXT,
+    status ENUM('pending', 'resolved', 'appealed') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
 );
 
 -- Create manufacturers table
@@ -84,3 +139,8 @@ INSERT IGNORE INTO manufacturers (name, license_number, phone, email, address) V
 INSERT IGNORE INTO products (product_id, name, manufacturer, manufacturer_phone, manufacturer_email, description, category, price, manufacturing_date, expiry_date, batch_number, certification_status) VALUES 
 ('PRD001', 'Premium Headphones', 'TechCorp Ltd', '+1234567890', 'contact@techcorp.com', 'High-quality wireless headphones', 'Electronics', 299.99, '2024-01-15', '2026-01-15', 'TC2024001', 'Certified by MBS'),
 ('PRD002', 'Organic Green Tea', 'Nature Foods', '+0987654321', 'info@naturefoods.com', 'Premium organic green tea leaves', 'Food & Beverage', 24.99, '2024-02-01', '2025-02-01', 'NF2024002', 'Certified by MBS');
+
+-- Insert sample batch data
+INSERT IGNORE INTO product_batches (batch_id, product_name, manufacturer_id, manufacture_date, expiry_date, qr_token, qr_signature) VALUES 
+('MBS-2025-000001', 'Premium Headphones', 1, '2024-01-15', '2026-01-15', '8F29CD1ABEE1E45A', 'F0D12C4A8B9E7F3D2C1A5B8E9F4D7C2A1B5E8F3D6C9A2B5E8F1D4C7A0B3E6F9'),
+('MBS-2025-000002', 'Organic Green Tea', 2, '2024-02-01', '2025-02-01', '7E18BC0A9DD0D34B', 'E1C23D5A7B8E6F4D1C2A4B7E9F5D8C3A0B6E9F2D5C8A1B4E7F0D3C6A9B2E5F8');

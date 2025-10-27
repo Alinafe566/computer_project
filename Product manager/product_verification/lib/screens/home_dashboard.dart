@@ -4,9 +4,40 @@ import 'scan_history_page.dart';
 import 'profile_page.dart';
 import 'report_counterfeit_page.dart';
 import 'notifications_page.dart';
+import 'debug_screen.dart';
+import '../services/api_service.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
-class HomeDashboard extends StatelessWidget {
+class HomeDashboard extends StatefulWidget {
   const HomeDashboard({super.key});
+
+  @override
+  State<HomeDashboard> createState() => _HomeDashboardState();
+}
+
+class _HomeDashboardState extends State<HomeDashboard> {
+  Map<String, int> userStats = {'scans': 0, 'authentic': 0, 'alerts': 0};
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserStats();
+  }
+
+  Future<void> _loadUserStats() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.user != null) {
+      final history = await ApiService.getScanHistory(authProvider.user!.id);
+      setState(() {
+        userStats['scans'] = history.length;
+        userStats['authentic'] = history.where((scan) => scan['scan_result'] == 'valid').length;
+        userStats['alerts'] = history.where((scan) => scan['scan_result'] == 'fake').length;
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +46,15 @@ class HomeDashboard extends StatelessWidget {
         title: const Text('MBS Verify'),
         automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DebugScreen()),
+              );
+            },
+            icon: const Icon(Icons.bug_report),
+          ),
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -81,9 +121,9 @@ class HomeDashboard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem('Scans Today', '12', Icons.qr_code_scanner),
-                    _buildStatItem('Authentic', '10', Icons.verified),
-                    _buildStatItem('Alerts', '2', Icons.warning),
+                    _buildStatItem('Total Scans', '${userStats['scans']}', Icons.qr_code_scanner),
+                    _buildStatItem('Authentic', '${userStats['authentic']}', Icons.verified),
+                    _buildStatItem('Alerts', '${userStats['alerts']}', Icons.warning),
                   ],
                 ),
               ),
