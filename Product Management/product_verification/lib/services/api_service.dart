@@ -1,8 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.39.84/product_verification_system_api';
+  static String get baseUrl {
+    try {
+      return dotenv.env['API_BASE_URL'] ??
+          'http://localhost/product_verification_system_api';
+    } catch (e) {
+      return 'http://localhost/product_verification_system_api';
+    }
+  }
 
   static Future<Map<String, dynamic>> createBatch({
     required String productName,
@@ -11,24 +19,29 @@ class ApiService {
     required String expiryDate,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/batches/create_batch.php'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'product_name': productName,
-          'manufacturer_id': manufacturerId,
-          'manufacture_date': manufactureDate,
-          'expiry_date': expiryDate,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/batches/create_batch.php'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'product_name': productName,
+              'manufacturer_id': manufacturerId,
+              'manufacture_date': manufactureDate,
+              'expiry_date': expiryDate,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'success': false, 'message': 'Server error: ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Server error: ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
@@ -37,15 +50,20 @@ class ApiService {
 
   static Future<Map<String, dynamic>> testConnection() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/test_connection.php'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/test_connection.php'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'success': false, 'message': 'Server error: ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Server error: ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Connection failed: $e'};
@@ -58,7 +76,7 @@ class ApiService {
         Uri.parse('$baseUrl/reports/get_counterfeit.php'),
         headers: {'Content-Type': 'application/json'},
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success']) {
@@ -77,7 +95,7 @@ class ApiService {
         Uri.parse('$baseUrl/manufacturers/list.php'),
         headers: {'Content-Type': 'application/json'},
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success']) {
@@ -96,7 +114,7 @@ class ApiService {
         Uri.parse('$baseUrl/analytics/scan_stats.php'),
         headers: {'Content-Type': 'application/json'},
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success']) {
@@ -109,14 +127,17 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> updateReportStatus(int reportId, String status) async {
+  static Future<Map<String, dynamic>> updateReportStatus(
+    int reportId,
+    String status,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/reports/update_status.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'report_id': reportId, 'status': status}),
       );
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
@@ -126,14 +147,17 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> updateManufacturerStatus(int manufacturerId, String action) async {
+  static Future<Map<String, dynamic>> updateManufacturerStatus(
+    int manufacturerId,
+    String action,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/manufacturers/update_status.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'manufacturer_id': manufacturerId, 'action': action}),
       );
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
@@ -148,7 +172,7 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/analytics/export_pdf.php'),
       );
-      
+
       if (response.statusCode == 200) {
         return response.body;
       }
@@ -164,7 +188,7 @@ class ApiService {
         Uri.parse('$baseUrl/products/get_all.php'),
         headers: {'Content-Type': 'application/json'},
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success']) {
@@ -177,14 +201,16 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> addManufacturer(Map<String, dynamic> manufacturerData) async {
+  static Future<Map<String, dynamic>> addManufacturer(
+    Map<String, dynamic> manufacturerData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/manufacturers/add.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(manufacturerData),
       );
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
@@ -194,14 +220,16 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> addUser(Map<String, dynamic> userData) async {
+  static Future<Map<String, dynamic>> addUser(
+    Map<String, dynamic> userData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/users/add.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(userData),
       );
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
@@ -211,14 +239,16 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> addPenalty(Map<String, dynamic> penaltyData) async {
+  static Future<Map<String, dynamic>> addPenalty(
+    Map<String, dynamic> penaltyData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/compliance/add_penalty.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(penaltyData),
       );
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
@@ -228,14 +258,16 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> scheduleAudit(Map<String, dynamic> auditData) async {
+  static Future<Map<String, dynamic>> scheduleAudit(
+    Map<String, dynamic> auditData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/compliance/schedule_audit.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(auditData),
       );
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }

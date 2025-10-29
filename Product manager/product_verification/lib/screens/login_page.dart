@@ -22,6 +22,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = true);
 
+    print('[MOBILE LOGIN] Attempting login for: ${_emailController.text.trim()}');
     final result = await ApiService.loginUser(
       email: _emailController.text.trim(),
       password: _passwordController.text,
@@ -31,11 +32,13 @@ class _LoginPageState extends State<LoginPage> {
 
     if (mounted) {
       if (result['success']) {
+        print('[MOBILE LOGIN] Login successful');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeDashboard()),
         );
       } else {
+        print('[MOBILE LOGIN ERROR] Login failed: ${result['message']}');
         Fluttertoast.showToast(
           msg: result['message'] ?? 'Login failed',
           backgroundColor: Colors.red,

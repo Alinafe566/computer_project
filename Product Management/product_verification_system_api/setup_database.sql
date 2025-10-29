@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id VARCHAR(50) UNIQUE NOT NULL,
+    qr_code VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(200) NOT NULL,
     manufacturer VARCHAR(200) NOT NULL,
     manufacturer_phone VARCHAR(20),
@@ -75,6 +76,6 @@ INSERT IGNORE INTO manufacturers (name, license_number, phone, email, address) V
 ('TechCorp Ltd', 'LIC001', '+1234567890', 'contact@techcorp.com', '123 Tech Street'),
 ('Nature Foods', 'LIC002', '+0987654321', 'info@naturefoods.com', '456 Organic Ave');
 
-INSERT IGNORE INTO products (product_id, name, manufacturer, manufacturer_phone, manufacturer_email, description, category, price, manufacturing_date, expiry_date, batch_number, certification_status) VALUES 
-('PRD001', 'Premium Headphones', 'TechCorp Ltd', '+1234567890', 'contact@techcorp.com', 'High-quality wireless headphones', 'Electronics', 299.99, '2024-01-15', '2026-01-15', 'TC2024001', 'Certified by MBS'),
-('PRD002', 'Organic Green Tea', 'Nature Foods', '+0987654321', 'info@naturefoods.com', 'Premium organic green tea leaves', 'Food & Beverage', 24.99, '2024-02-01', '2025-02-01', 'NF2024002', 'Certified by MBS');
+INSERT IGNORE INTO products (product_id, qr_code, name, manufacturer, manufacturer_phone, manufacturer_email, description, category, price, manufacturing_date, expiry_date, batch_number, certification_status) VALUES 
+('PRD001', 'QR-PRD001-MBS-2024', 'Premium Headphones', 'TechCorp Ltd', '+1234567890', 'contact@techcorp.com', 'High-quality wireless headphones', 'Electronics', 299.99, '2024-01-15', '2026-01-15', 'TC2024001', 'Certified by MBS'),
+('PRD002', 'QR-PRD002-MBS-2024', 'Organic Green Tea', 'Nature Foods', '+0987654321', 'info@naturefoods.com', 'Premium organic green tea leaves', 'Food & Beverage', 24.99, '2024-02-01', '2025-02-01', 'NF2024002', 'Certified by MBS');

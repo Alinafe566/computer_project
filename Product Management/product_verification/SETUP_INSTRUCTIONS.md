@@ -12,7 +12,7 @@
 
 2. **Database Already Setup**
    - Uses existing `product_verification_system_db` database
-   - Uses existing `users` table with admin/consumer roles
+   - Uses existing `users` table with admin/consumer roles 
 
 3. **API Endpoints Available**
    - Login endpoint: http://localhost/product_verification_system_api/auth/login.php

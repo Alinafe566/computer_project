@@ -20,20 +20,22 @@ if (!isset($input['qr_code']) || empty($input['qr_code'])) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT name, manufacturer, expiry_date, batch_number, is_verified, certification_status FROM products WHERE product_id = ?");
+    $stmt = $pdo->prepare("SELECT name, manufacturer, expiry_date, batch_number, is_verified, certification_status FROM products WHERE qr_code = ?");
     $stmt->execute([$input['qr_code']]);
     $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($product) {
         $isExpired = $product['expiry_date'] && strtotime($product['expiry_date']) < time();
+        $isOriginal = $product['is_verified'] && !$isExpired;
         $certificationStatus = $product['is_verified'] ? 
             ($isExpired ? 'Expired' : $product['certification_status']) : 
             'Not Certified';
         
         echo json_encode([
             'success' => true,
-            'message' => $product['is_verified'] && !$isExpired ? 'Product verified successfully' : 'Product verification failed',
-            'is_authentic' => $product['is_verified'] && !$isExpired,
+            'message' => $isOriginal ? 'Product is ORIGINAL' : 'Product verification failed',
+            'is_authentic' => $isOriginal,
+            'is_original' => $isOriginal,
             'product' => [
                 'name' => $product['name'],
                 'manufacturer' => $product['manufacturer'],
@@ -45,8 +47,9 @@ try {
     } else {
         echo json_encode([
             'success' => false,
-            'message' => 'Product not found',
-            'is_authentic' => false
+            'message' => 'Product not found - COUNTERFEIT',
+            'is_authentic' => false,
+            'is_original' => false
         ]);
     }
 } catch (PDOException $e) {

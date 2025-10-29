@@ -1,16 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/product.dart';
 
 class ApiService {
-  static String get baseUrl {
-    try {
-      return dotenv.env['API_BASE_URL'] ?? 'http://192.168.39.84/product_verification_system_api';
-    } catch (e) {
-      return 'http://192.168.39.84/product_verification_system_api';
-    }
-  }
+  static String get baseUrl => 'http://192.168.39.84/product_verification_system_api';
 
   static Future<Map<String, dynamic>> registerUser({
     required String fullName,
@@ -46,6 +39,7 @@ class ApiService {
     required String password,
   }) async {
     try {
+      print('[API] Login request to: $baseUrl/auth/login.php');
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login.php'),
         headers: {
@@ -58,12 +52,16 @@ class ApiService {
         }),
       ).timeout(const Duration(seconds: 10));
 
+      print('[API] Response status: ${response.statusCode}');
+      print('[API] Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
         return {'success': false, 'message': 'Server error: ${response.statusCode}'};
       }
     } catch (e) {
+      print('[API ERROR] Exception: $e');
       return {'success': false, 'message': 'Network error: Unable to connect to server'};
     }
   }
@@ -114,10 +112,11 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/test_connection.php'),
         headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        return data;
       } else {
         return {'success': false, 'message': 'Server error: ${response.statusCode}'};
       }
