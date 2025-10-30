@@ -173,7 +173,7 @@ class _ReportCounterfeitPageState extends State<ReportCounterfeitPage> {
 
       final result = await ApiService.submitCounterfeitReport(
         userId: userId,
-        productId: widget.productId,
+        batchId: widget.productId,
         storeName: _storeNameController.text,
         description: _descriptionController.text,
       );

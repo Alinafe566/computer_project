@@ -15,34 +15,57 @@ void main() async {
   } catch (e) {
     // Error loading .env file
   }
-  runApp(const MyApp());
+  runApp(const MBSAdminApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MBSAdminApp extends StatelessWidget {
+  const MBSAdminApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MBS Admin System',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1565C0),
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1565C0),
+          foregroundColor: Colors.white,
+          elevation: 2,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1565C0),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          filled: true,
+          fillColor: Colors.grey.shade50,
+        ),
       ),
-      home: const LoginPage(),
+      home: const AdminLoginPage(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class AdminLoginPage extends StatefulWidget {
+  const AdminLoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<AdminLoginPage> createState() => _AdminLoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _AdminLoginPageState extends State<AdminLoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -64,12 +87,12 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       final data = json.decode(response.body);
-      
+
       if (mounted) {
         if (data['success']) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
+            MaterialPageRoute(builder: (context) => const AdminDashboardPage()),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -126,7 +149,10 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 16),
                     const Text(
                       'MBS Admin System',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 32),
                     TextFormField(
@@ -180,16 +206,16 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+class AdminDashboardPage extends StatefulWidget {
+  const AdminDashboardPage({super.key});
 
   @override
-  State<DashboardPage> createState() => _DashboardPageState();
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _selectedIndex = 0;
-  
+
   final List<Widget> _pages = [
     const DashboardOverview(),
     const ProductManagementPage(),
@@ -223,7 +249,8 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           NavigationRail(
             selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+            onDestinationSelected: (index) =>
+                setState(() => _selectedIndex = index),
             labelType: NavigationRailLabelType.all,
             backgroundColor: const Color(0xFF1565C0),
             selectedIconTheme: const IconThemeData(color: Colors.white),
@@ -231,16 +258,46 @@ class _DashboardPageState extends State<DashboardPage> {
             unselectedIconTheme: const IconThemeData(color: Colors.white70),
             unselectedLabelTextStyle: const TextStyle(color: Colors.white70),
             destinations: const [
-              NavigationRailDestination(icon: Icon(Icons.dashboard), label: Text('Dashboard')),
-              NavigationRailDestination(icon: Icon(Icons.inventory), label: Text('Products')),
-              NavigationRailDestination(icon: Icon(Icons.report_problem), label: Text('Reports')),
-              NavigationRailDestination(icon: Icon(Icons.warning), label: Text('Alerts')),
-              NavigationRailDestination(icon: Icon(Icons.analytics), label: Text('Analytics')),
-              NavigationRailDestination(icon: Icon(Icons.business), label: Text('Manufacturers')),
-              NavigationRailDestination(icon: Icon(Icons.gavel), label: Text('Compliance')),
-              NavigationRailDestination(icon: Icon(Icons.assessment), label: Text('Audits')),
-              NavigationRailDestination(icon: Icon(Icons.people), label: Text('Users')),
-              NavigationRailDestination(icon: Icon(Icons.settings), label: Text('Settings')),
+              NavigationRailDestination(
+                icon: Icon(Icons.dashboard),
+                label: Text('Dashboard'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.inventory),
+                label: Text('Products'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.report_problem),
+                label: Text('Reports'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.warning),
+                label: Text('Alerts'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.analytics),
+                label: Text('Analytics'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.business),
+                label: Text('Manufacturers'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.gavel),
+                label: Text('Compliance'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.assessment),
+                label: Text('Audits'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.people),
+                label: Text('Users'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.settings),
+                label: Text('Settings'),
+              ),
             ],
           ),
           Expanded(
@@ -255,7 +312,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     IconButton(
                       onPressed: () => Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        MaterialPageRoute(
+                          builder: (context) => const AdminLoginPage(),
+                        ),
                       ),
                       icon: const Icon(Icons.logout),
                       tooltip: 'Logout',
@@ -312,10 +371,23 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        const Icon(Icons.verified, size: 32, color: Colors.green),
+                        const Icon(
+                          Icons.verified,
+                          size: 32,
+                          color: Colors.green,
+                        ),
                         const SizedBox(height: 8),
-                        const Text('Verified Products', style: TextStyle(fontSize: 16)),
-                        Text('${stats['total_products'] ?? 0}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Verified Products',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          '${stats['total_products'] ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -327,10 +399,23 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        const Icon(Icons.warning, size: 32, color: Colors.orange),
+                        const Icon(
+                          Icons.warning,
+                          size: 32,
+                          color: Colors.orange,
+                        ),
                         const SizedBox(height: 8),
-                        const Text('Active Alerts', style: TextStyle(fontSize: 16)),
-                        Text('${stats['total_scans'] ?? 0}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Active Alerts',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          '${stats['total_scans'] ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -342,10 +427,23 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        const Icon(Icons.report_problem, size: 32, color: Colors.red),
+                        const Icon(
+                          Icons.report_problem,
+                          size: 32,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 8),
-                        const Text('Counterfeit Reports', style: TextStyle(fontSize: 16)),
-                        Text('${stats['total_reports'] ?? 0}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Counterfeit Reports',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          '${stats['total_reports'] ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -357,10 +455,23 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        const Icon(Icons.business, size: 32, color: Colors.blue),
+                        const Icon(
+                          Icons.business,
+                          size: 32,
+                          color: Colors.blue,
+                        ),
                         const SizedBox(height: 8),
-                        const Text('Manufacturers', style: TextStyle(fontSize: 16)),
-                        Text('${stats['total_manufacturers'] ?? 0}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Manufacturers',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          '${stats['total_manufacturers'] ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -369,7 +480,10 @@ class _DashboardOverviewState extends State<DashboardOverview> {
             ],
           ),
           const SizedBox(height: 24),
-          const Text('Recent Activity', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Recent Activity',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           Expanded(
             child: Card(
@@ -378,12 +492,16 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.add_circle, color: Colors.green),
-                    title: const Text('New product registered: Premium Headphones'),
+                    title: const Text(
+                      'New product registered: Premium Headphones',
+                    ),
                     subtitle: const Text('2 minutes ago'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.warning, color: Colors.orange),
-                    title: const Text('Alert: Suspicious scanning pattern detected'),
+                    title: const Text(
+                      'Alert: Suspicious scanning pattern detected',
+                    ),
                     subtitle: const Text('15 minutes ago'),
                   ),
                   ListTile(
@@ -452,7 +570,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Bulk import completed successfully')),
+                const SnackBar(
+                  content: Text('Bulk import completed successfully'),
+                ),
               );
             },
             child: const Text('Import'),
@@ -516,7 +636,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               ElevatedButton.icon(
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AddProductPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const AddProductPage(),
+                  ),
                 ),
                 icon: const Icon(Icons.add),
                 label: const Text('Add Product'),
@@ -525,7 +647,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               ElevatedButton.icon(
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const BatchManagementPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const BatchManagementPage(),
+                  ),
                 ),
                 icon: const Icon(Icons.inventory),
                 label: const Text('Create Batch'),
@@ -545,7 +669,13 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Text('Registered Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Registered Products',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: isLoading
@@ -556,11 +686,20 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                               final product = products[index];
                               return ListTile(
                                 leading: const Icon(Icons.inventory),
-                                title: Text(product['name'] ?? 'Unknown Product'),
-                                subtitle: Text('${product['product_id']} - ${product['manufacturer']}'),
+                                title: Text(
+                                  product['name'] ?? 'Unknown Product',
+                                ),
+                                subtitle: Text(
+                                  '${product['product_id']} - ${product['manufacturer']}',
+                                ),
                                 trailing: Chip(
-                                  label: Text(product['certification_status'] ?? 'Unknown'),
-                                  backgroundColor: product['certification_status'] == 'Certified by MBS'
+                                  label: Text(
+                                    product['certification_status'] ??
+                                        'Unknown',
+                                  ),
+                                  backgroundColor:
+                                      product['certification_status'] ==
+                                          'Certified by MBS'
                                       ? Colors.green.shade100
                                       : Colors.orange.shade100,
                                 ),
@@ -615,7 +754,10 @@ class _CounterfeitReportsPageState extends State<CounterfeitReportsPage> {
           children: [
             const Padding(
               padding: EdgeInsets.all(16.0),
-              child: Text('Counterfeit Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Counterfeit Reports',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
             Expanded(
               child: isLoading
@@ -627,20 +769,32 @@ class _CounterfeitReportsPageState extends State<CounterfeitReportsPage> {
                         return ListTile(
                           leading: Icon(
                             Icons.report_problem,
-                            color: report['status'] == 'resolved' ? Colors.green : Colors.red,
+                            color: report['status'] == 'resolved'
+                                ? Colors.green
+                                : Colors.red,
                           ),
                           title: Text(report['store_name'] ?? 'Unknown Store'),
-                          subtitle: Text('Product: ${report['product_id'] ?? 'N/A'} - Status: ${report['status']}'),
+                          subtitle: Text(
+                            'Product: ${report['product_id'] ?? 'N/A'} - Status: ${report['status']}',
+                          ),
                           trailing: ElevatedButton(
                             onPressed: () async {
-                              final result = await ApiService.updateReportStatus(report['id'], 'investigating');
+                              final result =
+                                  await ApiService.updateReportStatus(
+                                    report['id'],
+                                    'investigating',
+                                  );
                               if (result['success']) {
                                 setState(() {
                                   report['status'] = 'investigating';
                                 });
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Report #${report['id']} under investigation')),
+                                    SnackBar(
+                                      content: Text(
+                                        'Report #${report['id']} under investigation',
+                                      ),
+                                    ),
                                   );
                                 }
                               }
@@ -670,7 +824,10 @@ class ActiveAlertsPage extends StatelessWidget {
           children: [
             const Padding(
               padding: EdgeInsets.all(16.0),
-              child: Text('Active Alerts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Active Alerts',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
             Expanded(
               child: ListView(
@@ -685,7 +842,9 @@ class ActiveAlertsPage extends StatelessWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: const Text('Investigation'),
-                            content: const Text('Critical alert investigation initiated. MBS team has been notified.'),
+                            content: const Text(
+                              'Critical alert investigation initiated. MBS team has been notified.',
+                            ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
@@ -695,7 +854,11 @@ class ActiveAlertsPage extends StatelessWidget {
                                 onPressed: () {
                                   Navigator.pop(context);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Investigation team assigned')),
+                                    const SnackBar(
+                                      content: Text(
+                                        'Investigation team assigned',
+                                      ),
+                                    ),
                                   );
                                 },
                                 child: const Text('Assign Team'),
@@ -717,7 +880,9 @@ class ActiveAlertsPage extends StatelessWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: const Text('Product Review'),
-                            content: const Text('Product expiry review completed. Manufacturer has been notified to update inventory.'),
+                            content: const Text(
+                              'Product expiry review completed. Manufacturer has been notified to update inventory.',
+                            ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
@@ -727,7 +892,11 @@ class ActiveAlertsPage extends StatelessWidget {
                                 onPressed: () {
                                   Navigator.pop(context);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Notification sent to manufacturer')),
+                                    const SnackBar(
+                                      content: Text(
+                                        'Notification sent to manufacturer',
+                                      ),
+                                    ),
                                   );
                                 },
                                 child: const Text('Send Notice'),
@@ -791,9 +960,7 @@ class _ScanAnalyticsPageState extends State<ScanAnalyticsPage> {
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Analytics Report'),
-                        content: SingleChildScrollView(
-                          child: Text(report),
-                        ),
+                        content: SingleChildScrollView(child: Text(report)),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -825,7 +992,13 @@ class _ScanAnalyticsPageState extends State<ScanAnalyticsPage> {
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          const Text('Scan Statistics', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          const Text(
+                            'Scan Statistics',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           Expanded(
                             child: Container(
@@ -833,7 +1006,9 @@ class _ScanAnalyticsPageState extends State<ScanAnalyticsPage> {
                               child: Center(
                                 child: isLoading
                                     ? const CircularProgressIndicator()
-                                    : Text('Total Scans: ${stats['total_scans'] ?? 0}\nTotal Products: ${stats['total_products'] ?? 0}'),
+                                    : Text(
+                                        'Total Scans: ${stats['total_scans'] ?? 0}\nTotal Products: ${stats['total_products'] ?? 0}',
+                                      ),
                               ),
                             ),
                           ),
@@ -848,13 +1023,21 @@ class _ScanAnalyticsPageState extends State<ScanAnalyticsPage> {
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          const Text('Geographic Heatmap', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          const Text(
+                            'Geographic Heatmap',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           Expanded(
                             child: Container(
                               color: Colors.grey.shade200,
                               child: const Center(
-                                child: Text('Map Placeholder\n(Scan locations)'),
+                                child: Text(
+                                  'Map Placeholder\n(Scan locations)',
+                                ),
                               ),
                             ),
                           ),
@@ -876,7 +1059,8 @@ class ManufacturerRegistryPage extends StatefulWidget {
   const ManufacturerRegistryPage({super.key});
 
   @override
-  State<ManufacturerRegistryPage> createState() => _ManufacturerRegistryPageState();
+  State<ManufacturerRegistryPage> createState() =>
+      _ManufacturerRegistryPageState();
 }
 
 class _ManufacturerRegistryPageState extends State<ManufacturerRegistryPage> {
@@ -976,7 +1160,8 @@ class _ManufacturerRegistryPageState extends State<ManufacturerRegistryPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.isNotEmpty && licenseController.text.isNotEmpty) {
+              if (nameController.text.isNotEmpty &&
+                  licenseController.text.isNotEmpty) {
                 final result = await ApiService.addManufacturer({
                   'name': nameController.text,
                   'license_number': licenseController.text,
@@ -984,20 +1169,20 @@ class _ManufacturerRegistryPageState extends State<ManufacturerRegistryPage> {
                   'email': emailController.text,
                   'address': addressController.text,
                 });
-                
+
                 Navigator.pop(context);
                 if (result['success']) {
                   _loadManufacturers();
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(result['message'])),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(result['message'])));
                   }
                 } else {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(result['message'])),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(result['message'])));
                   }
                 }
               }
@@ -1028,7 +1213,9 @@ class _ManufacturerRegistryPageState extends State<ManufacturerRegistryPage> {
               ElevatedButton.icon(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('License verification initiated')),
+                    const SnackBar(
+                      content: Text('License verification initiated'),
+                    ),
                   );
                 },
                 icon: const Icon(Icons.verified),
@@ -1043,7 +1230,13 @@ class _ManufacturerRegistryPageState extends State<ManufacturerRegistryPage> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Text('Registered Manufacturers', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Registered Manufacturers',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: isLoading
@@ -1055,34 +1248,52 @@ class _ManufacturerRegistryPageState extends State<ManufacturerRegistryPage> {
                               return ListTile(
                                 leading: const Icon(Icons.business),
                                 title: Text(manufacturer['name']),
-                                subtitle: Text('License: ${manufacturer['license_number']} - Status: ${manufacturer['status']}'),
+                                subtitle: Text(
+                                  'License: ${manufacturer['license_number']} - Status: ${manufacturer['status']}',
+                                ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
                                       onPressed: () {
-                                        _showEditManufacturerDialog(manufacturer);
+                                        _showEditManufacturerDialog(
+                                          manufacturer,
+                                        );
                                       },
                                       icon: const Icon(Icons.edit),
                                     ),
                                     IconButton(
                                       onPressed: () async {
-                                        final result = await ApiService.updateManufacturerStatus(
-                                          manufacturer['id'], 
-                                          manufacturer['status'] == 'active' ? 'block' : 'verify'
-                                        );
+                                        final result =
+                                            await ApiService.updateManufacturerStatus(
+                                              manufacturer['id'],
+                                              manufacturer['status'] == 'active'
+                                                  ? 'block'
+                                                  : 'verify',
+                                            );
                                         if (result['success']) {
                                           _loadManufacturers();
                                           if (mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(result['message'])),
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  result['message'],
+                                                ),
+                                              ),
                                             );
                                           }
                                         }
                                       },
                                       icon: Icon(
-                                        manufacturer['status'] == 'active' ? Icons.block : Icons.check_circle,
-                                        color: manufacturer['status'] == 'active' ? Colors.red : Colors.green,
+                                        manufacturer['status'] == 'active'
+                                            ? Icons.block
+                                            : Icons.check_circle,
+                                        color:
+                                            manufacturer['status'] == 'active'
+                                            ? Colors.red
+                                            : Colors.green,
                                       ),
                                     ),
                                   ],
@@ -1130,17 +1341,28 @@ class _CompliancePageState extends State<CompliancePage> {
                   DropdownMenuItem(value: 1, child: Text('TechCorp Ltd')),
                   DropdownMenuItem(value: 2, child: Text('Nature Foods')),
                 ],
-                onChanged: (value) => setState(() => selectedManufacturerId = value!),
+                onChanged: (value) =>
+                    setState(() => selectedManufacturerId = value!),
               ),
               DropdownButtonFormField<String>(
                 value: selectedOffenseType,
                 decoration: const InputDecoration(labelText: 'Offense Type'),
                 items: const [
-                  DropdownMenuItem(value: 'counterfeit', child: Text('Counterfeit')),
-                  DropdownMenuItem(value: 'price_manipulation', child: Text('Price Manipulation')),
-                  DropdownMenuItem(value: 'false_certification', child: Text('False Certification')),
+                  DropdownMenuItem(
+                    value: 'counterfeit',
+                    child: Text('Counterfeit'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'price_manipulation',
+                    child: Text('Price Manipulation'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'false_certification',
+                    child: Text('False Certification'),
+                  ),
                 ],
-                onChanged: (value) => setState(() => selectedOffenseType = value!),
+                onChanged: (value) =>
+                    setState(() => selectedOffenseType = value!),
               ),
               TextField(
                 controller: amountController,
@@ -1161,19 +1383,20 @@ class _CompliancePageState extends State<CompliancePage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (amountController.text.isNotEmpty && reasonController.text.isNotEmpty) {
+                if (amountController.text.isNotEmpty &&
+                    reasonController.text.isNotEmpty) {
                   final result = await ApiService.addPenalty({
                     'manufacturer_id': selectedManufacturerId,
                     'offense_type': selectedOffenseType,
                     'penalty_amount': double.parse(amountController.text),
                     'description': reasonController.text,
                   });
-                  
+
                   Navigator.pop(context);
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(result['message'])),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(result['message'])));
                   }
                 }
               },
@@ -1206,17 +1429,25 @@ class _CompliancePageState extends State<CompliancePage> {
                   DropdownMenuItem(value: 1, child: Text('TechCorp Ltd')),
                   DropdownMenuItem(value: 2, child: Text('Nature Foods')),
                 ],
-                onChanged: (value) => setState(() => selectedManufacturerId = value!),
+                onChanged: (value) =>
+                    setState(() => selectedManufacturerId = value!),
               ),
               DropdownButtonFormField<String>(
                 value: selectedAuditType,
                 decoration: const InputDecoration(labelText: 'Audit Type'),
                 items: const [
-                  DropdownMenuItem(value: 'inspection', child: Text('Inspection')),
-                  DropdownMenuItem(value: 'compliance', child: Text('Compliance')),
+                  DropdownMenuItem(
+                    value: 'inspection',
+                    child: Text('Inspection'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'compliance',
+                    child: Text('Compliance'),
+                  ),
                   DropdownMenuItem(value: 'renewal', child: Text('Renewal')),
                 ],
-                onChanged: (value) => setState(() => selectedAuditType = value!),
+                onChanged: (value) =>
+                    setState(() => selectedAuditType = value!),
               ),
               TextField(
                 controller: dateController,
@@ -1238,18 +1469,23 @@ class _CompliancePageState extends State<CompliancePage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (dateController.text.isNotEmpty && auditorController.text.isNotEmpty) {
+                if (dateController.text.isNotEmpty &&
+                    auditorController.text.isNotEmpty) {
                   final result = await ApiService.scheduleAudit({
                     'manufacturer_id': selectedManufacturerId,
                     'audit_type': selectedAuditType,
                     'audit_date': dateController.text,
                     'auditor_name': auditorController.text,
                   });
-                  
+
                   Navigator.pop(context);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${result['message']} - Receipt: ${result['receipt_number'] ?? 'N/A'}')),
+                      SnackBar(
+                        content: Text(
+                          '${result['message']} - Receipt: ${result['receipt_number'] ?? 'N/A'}',
+                        ),
+                      ),
                     );
                   }
                 }
@@ -1297,14 +1533,22 @@ class _CompliancePageState extends State<CompliancePage> {
                       children: [
                         const Padding(
                           padding: EdgeInsets.all(16.0),
-                          child: Text('Pending Penalties', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'Pending Penalties',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                         Expanded(
                           child: ListView(
                             children: [
                               ListTile(
                                 title: const Text('TechCorp Ltd'),
-                                subtitle: const Text('Counterfeit violation - \$5,000'),
+                                subtitle: const Text(
+                                  'Counterfeit violation - \$5,000',
+                                ),
                                 trailing: const Text('Due: 15 days'),
                               ),
                             ],
@@ -1320,7 +1564,13 @@ class _CompliancePageState extends State<CompliancePage> {
                       children: [
                         const Padding(
                           padding: EdgeInsets.all(16.0),
-                          child: Text('Upcoming Audits', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'Upcoming Audits',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                         Expanded(
                           child: ListView(
@@ -1406,7 +1656,9 @@ class _AuditReportsPageState extends State<AuditReportsPage> {
             const Text('Auditor: MBS Inspector'),
             const Text('Result: Compliant'),
             const SizedBox(height: 16),
-            const Text('Summary: All manufacturing processes meet MBS standards.'),
+            const Text(
+              'Summary: All manufacturing processes meet MBS standards.',
+            ),
           ],
         ),
         actions: [
@@ -1427,9 +1679,7 @@ class _AuditReportsPageState extends State<AuditReportsPage> {
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              decoration: InputDecoration(labelText: 'Status'),
-            ),
+            TextField(decoration: InputDecoration(labelText: 'Status')),
             TextField(
               decoration: InputDecoration(labelText: 'Notes'),
               maxLines: 3,
@@ -1474,7 +1724,9 @@ class _AuditReportsPageState extends State<AuditReportsPage> {
               ElevatedButton.icon(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Reports archived successfully')),
+                    const SnackBar(
+                      content: Text('Reports archived successfully'),
+                    ),
                   );
                 },
                 icon: const Icon(Icons.archive),
@@ -1489,7 +1741,13 @@ class _AuditReportsPageState extends State<AuditReportsPage> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Text('Audit Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Audit Reports',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: ListView(
@@ -1497,10 +1755,15 @@ class _AuditReportsPageState extends State<AuditReportsPage> {
                         ListTile(
                           leading: const Icon(Icons.assessment),
                           title: const Text('TechCorp Compliance Audit'),
-                          subtitle: const Text('Status: Final - Date: Jan 15, 2024'),
+                          subtitle: const Text(
+                            'Status: Final - Date: Jan 15, 2024',
+                          ),
                           trailing: ElevatedButton(
                             onPressed: () {
-                              _showReportDetails('TechCorp Compliance Audit', 'Final');
+                              _showReportDetails(
+                                'TechCorp Compliance Audit',
+                                'Final',
+                              );
                             },
                             child: const Text('View'),
                           ),
@@ -1508,10 +1771,14 @@ class _AuditReportsPageState extends State<AuditReportsPage> {
                         ListTile(
                           leading: const Icon(Icons.assessment),
                           title: const Text('Nature Foods Quality Check'),
-                          subtitle: const Text('Status: Draft - Date: Jan 10, 2024'),
+                          subtitle: const Text(
+                            'Status: Draft - Date: Jan 10, 2024',
+                          ),
                           trailing: ElevatedButton(
                             onPressed: () {
-                              _showEditReportDialog('Nature Foods Quality Check');
+                              _showEditReportDialog(
+                                'Nature Foods Quality Check',
+                              );
                             },
                             child: const Text('Edit'),
                           ),
@@ -1548,7 +1815,9 @@ class _SystemUsersPageState extends State<SystemUsersPage> {
               ElevatedButton.icon(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Add user functionality coming soon')),
+                    const SnackBar(
+                      content: Text('Add user functionality coming soon'),
+                    ),
                   );
                 },
                 icon: const Icon(Icons.person_add),
@@ -1558,7 +1827,9 @@ class _SystemUsersPageState extends State<SystemUsersPage> {
               ElevatedButton.icon(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Permissions functionality coming soon')),
+                    const SnackBar(
+                      content: Text('Permissions functionality coming soon'),
+                    ),
                   );
                 },
                 icon: const Icon(Icons.security),
@@ -1573,7 +1844,13 @@ class _SystemUsersPageState extends State<SystemUsersPage> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Text('System Users', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'System Users',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: ListView(
@@ -1581,7 +1858,9 @@ class _SystemUsersPageState extends State<SystemUsersPage> {
                         ListTile(
                           leading: const Icon(Icons.admin_panel_settings),
                           title: const Text('Admin User'),
-                          subtitle: const Text('admin@example.com - Role: Administrator'),
+                          subtitle: const Text(
+                            'admin@example.com - Role: Administrator',
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -1591,7 +1870,10 @@ class _SystemUsersPageState extends State<SystemUsersPage> {
                               ),
                               IconButton(
                                 onPressed: () {},
-                                icon: const Icon(Icons.block, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.block,
+                                  color: Colors.red,
+                                ),
                               ),
                             ],
                           ),
@@ -1599,7 +1881,9 @@ class _SystemUsersPageState extends State<SystemUsersPage> {
                         ListTile(
                           leading: const Icon(Icons.person),
                           title: const Text('Test User'),
-                          subtitle: const Text('test@example.com - Role: Consumer'),
+                          subtitle: const Text(
+                            'test@example.com - Role: Consumer',
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -1609,7 +1893,10 @@ class _SystemUsersPageState extends State<SystemUsersPage> {
                               ),
                               IconButton(
                                 onPressed: () {},
-                                icon: const Icon(Icons.block, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.block,
+                                  color: Colors.red,
+                                ),
                               ),
                             ],
                           ),
@@ -1659,7 +1946,13 @@ class SettingsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('System Configuration', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'System Configuration',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     ListTile(
                       title: const Text('API Security Key'),
@@ -1712,7 +2005,9 @@ class _AddProductPageState extends State<AddProductPage> {
   final _categoryController = TextEditingController();
   final _priceController = TextEditingController();
   final _batchController = TextEditingController();
-  final _certificationController = TextEditingController(text: 'Certified by MBS');
+  final _certificationController = TextEditingController(
+    text: 'Certified by MBS',
+  );
   bool _isLoading = false;
 
   Future<void> _addProduct() async {
@@ -1722,7 +2017,9 @@ class _AddProductPageState extends State<AddProductPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.39.84/product_verification_system_api/products/add.php'),
+        Uri.parse(
+          'http://192.168.39.84/product_verification_system_api/products/add.php',
+        ),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'product_id': _productIdController.text,
@@ -1737,7 +2034,7 @@ class _AddProductPageState extends State<AddProductPage> {
       );
 
       final data = json.decode(response.body);
-      
+
       if (mounted) {
         if (data['success']) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1745,16 +2042,16 @@ class _AddProductPageState extends State<AddProductPage> {
           );
           Navigator.pop(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'])),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(data['message'])));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Connection error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Connection error')));
       }
     }
 
@@ -1765,10 +2062,10 @@ class _AddProductPageState extends State<AddProductPage> {
 
   Future<void> _generateQRPDF() async {
     if (_productIdController.text.isEmpty) return;
-    
+
     try {
       final pdf = pw.Document();
-      
+
       pdf.addPage(
         pw.Page(
           build: (pw.Context context) {
@@ -1778,7 +2075,10 @@ class _AddProductPageState extends State<AddProductPage> {
                 children: [
                   pw.Text(
                     'MBS Product QR Code',
-                    style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                    style: pw.TextStyle(
+                      fontSize: 24,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
                   pw.SizedBox(height: 30),
                   pw.Container(
@@ -1815,7 +2115,7 @@ class _AddProductPageState extends State<AddProductPage> {
         onLayout: (PdfPageFormat format) async => pdf.save(),
         name: 'MBS_QR_${_productIdController.text}.pdf',
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('QR Code PDF generated successfully')),
@@ -1823,9 +2123,9 @@ class _AddProductPageState extends State<AddProductPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error generating PDF: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error generating PDF: $e')));
       }
     }
   }
@@ -1968,7 +2268,9 @@ class _AddProductPageState extends State<AddProductPage> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: _productIdController.text.isEmpty ? null : _generateQRPDF,
+                      onPressed: _productIdController.text.isEmpty
+                          ? null
+                          : _generateQRPDF,
                       icon: const Icon(Icons.qr_code),
                       label: const Text('Generate QR Code PDF'),
                     ),

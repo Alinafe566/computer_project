@@ -17,6 +17,7 @@ class ApiService {
     required int manufacturerId,
     required String manufactureDate,
     required String expiryDate,
+    String? batchNumber,
   }) async {
     try {
       final response = await http
@@ -31,6 +32,7 @@ class ApiService {
               'manufacturer_id': manufacturerId,
               'manufacture_date': manufactureDate,
               'expiry_date': expiryDate,
+              if (batchNumber != null) 'batch_number': batchNumber,
             }),
           )
           .timeout(const Duration(seconds: 10));
@@ -45,6 +47,25 @@ class ApiService {
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getBatches() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/batches/list.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success']) {
+          return List<Map<String, dynamic>>.from(data['batches']);
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
     }
   }
 
@@ -185,7 +206,7 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getAllProducts() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/products/get_all.php'),
+        Uri.parse('$baseUrl/products/list.php'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -198,6 +219,40 @@ class ApiService {
       return [];
     } catch (e) {
       return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyProduct(String qrCode) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/products/verify.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'qr_code': qrCode}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {'success': false, 'message': 'Server error'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyBatch(String token, String signature) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/products/verify_batch.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'token': token, 'sig': signature}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {'success': false, 'message': 'Server error'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
